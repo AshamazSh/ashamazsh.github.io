@@ -2155,3 +2155,18 @@ async function testHash(message) {
     }
     return message
 }
+
+async function signFile(file) {
+    try {
+        const certificate = await getFirstValidCertificate();
+        const signature = await signFile(certificate.thumbprint, file, true, 1);
+        // true=откреплённая подпись false=прикреплённая подпись.
+        // 0 CAPICOM_CERTIFICATE_INCLUDE_CHAIN_EXCEPT_ROOT Сохраняет все сертификаты цепочки за исключением корневого.
+        // 1 CAPICOM_CERTIFICATE_INCLUDE_WHOLE_CHAIN Сохраняет полную цепочку.
+        // 2 CAPICOM_CERTIFICATE_INCLUDE_END_ENTITY_ONLY Сертификат включает только конечное лицо
+        console.log(signature);
+    } catch (error) {
+        console.log(error.message);
+    }
+}
+
