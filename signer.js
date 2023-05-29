@@ -2170,3 +2170,31 @@ async function signFile(file) {
     }
 }
 
+async function openFile() {
+    var input = document.createElement('input');
+    input.type = 'file';
+
+    input.onchange = e => {
+
+        // getting a hold of the file reference
+        var file = e.target.files[0];
+
+        // setting up the reader
+        var reader = new FileReader();
+        reader.readAsDataURL(file);
+
+        // here we tell the reader what to do when it's done reading...
+        // reader.onload = readerEvent => {
+        //     var content = readerEvent.target.result; // this is the content!
+        //     console.log(content);
+        // }
+        reader.onload = async function () {
+            await signFile(reader.result);
+        };
+        reader.onerror = function (error) {
+            console.log('Error: ', error);
+        };
+    }
+
+    input.click();
+}
