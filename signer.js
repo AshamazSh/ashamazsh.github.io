@@ -2158,7 +2158,9 @@ async function testHash(message) {
 
 async function signFile(file) {
     try {
+        console.log('Поиск сертификата...')
         const certificate = await getFirstValidCertificate();
+        console.log('Подпись...')
         const signature = await signFile(certificate.thumbprint, file, true, 1);
         // true=откреплённая подпись false=прикреплённая подпись.
         // 0 CAPICOM_CERTIFICATE_INCLUDE_CHAIN_EXCEPT_ROOT Сохраняет все сертификаты цепочки за исключением корневого.
