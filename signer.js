@@ -1088,7 +1088,7 @@ async function signBase64(thumbprint, base64, type = true, signOption = CAPICOM_
 
 /**
  * @async
- * @function signFile
+ * @function signFileFull
  * @param {String} thumbprint значение сертификата
  * @param {String} base64 файл - base64
  * @param {Boolean} type тип подписи true=откреплённая false=прикреплённая
@@ -1099,7 +1099,7 @@ async function signBase64(thumbprint, base64, type = true, signOption = CAPICOM_
  * @throws {Error}
  * @description подпись строки в формате base64
  */
-async function signFile(thumbprint, base64, type = true, signOption = CAPICOM_CERTIFICATE_INCLUDE_WHOLE_CHAIN) {
+async function signFileFull(thumbprint, base64, type = true, signOption = CAPICOM_CERTIFICATE_INCLUDE_WHOLE_CHAIN) {
     try {
         if (!thumbprint) {
             throw new Error('Не указано thumbprint значение сертификата');
@@ -2161,7 +2161,7 @@ async function signFile(file) {
         console.log('Поиск сертификата...')
         const certificate = await getFirstValidCertificate();
         console.log('Подпись...')
-        const signature = await signFile(certificate.thumbprint, file, true, 1);
+        const signature = await signFileFull(certificate.thumbprint, file, true, 1);
         // true=откреплённая подпись false=прикреплённая подпись.
         // 0 CAPICOM_CERTIFICATE_INCLUDE_CHAIN_EXCEPT_ROOT Сохраняет все сертификаты цепочки за исключением корневого.
         // 1 CAPICOM_CERTIFICATE_INCLUDE_WHOLE_CHAIN Сохраняет полную цепочку.
