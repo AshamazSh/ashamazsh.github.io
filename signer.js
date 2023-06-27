@@ -1088,7 +1088,7 @@ async function signBase64(thumbprint, base64, type = true, signOption = CAPICOM_
 
 /**
  * @async
- * @function signFileFull
+ * @function signFile
  * @param {String} thumbprint значение сертификата
  * @param {String} base64 файл - base64
  * @param {Boolean} type тип подписи true=откреплённая false=прикреплённая
