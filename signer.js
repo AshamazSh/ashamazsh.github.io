@@ -822,7 +822,7 @@ async function signFile(thumbprint, base64, type = true, signOption = CAPICOM_CE
 
         await oSigner.propset_Certificate(currentCert);
         await oSigner.propset_Options(signOption);
-
+        console.log('Signing....');
         return await oSignedData.SignCades(oSigner, CADESCOM_CADES_BES, type);
     } catch (error) {
         throw new Error(error.message);
