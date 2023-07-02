@@ -768,6 +768,7 @@ async function getCertsList() {
 async function getFirstValidCertificate() {
     try {
         const certList = await getCertsList();
+        console.log(certList.length);
 
         for (let index = 0; index < certList.length; index++) {
             console.log(index);
