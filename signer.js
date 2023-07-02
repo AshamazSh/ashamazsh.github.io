@@ -770,6 +770,7 @@ async function getFirstValidCertificate() {
         const certList = await getCertsList();
 
         for (let index = 0; index < certList.length; index++) {
+            console.log(certList[index].certApi.friendlySubjectInfo());
             let validation = await certList[index].certApi.IsValid();
             let isValid = await validation.Result;
 
