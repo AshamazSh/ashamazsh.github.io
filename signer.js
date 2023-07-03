@@ -806,21 +806,45 @@ async function signFile(thumbprint, base64, type = true, signOption = CAPICOM_CE
         } else if (typeof thumbprint !== 'string') {
             throw new Error('Не валидное значение thumbprint сертификата');
         }
-
+        var row = 0;
+        row += 1;
+        console.log(row);
         const oDateAttrs = await cadescomMethods.oAtts();
+        row += 1;
+        console.log(row);
         const oSignedData = await cadescomMethods.oSignedData();
+        row += 1;
+        console.log(row);
         const oSigner = await cadescomMethods.oSigner();
+        row += 1;
+        console.log(row);
         const currentCert = await currentCadesCert(thumbprint);
+        row += 1;
+        console.log(row);
         const authenticatedAttributes2 = await oSigner.AuthenticatedAttributes2;
 
+        row += 1;
+        console.log(row);
         await oDateAttrs.propset_Name(CAPICOM_AUTHENTICATED_ATTRIBUTE_SIGNING_TIME);
+        row += 1;
+        console.log(row);
         await oDateAttrs.propset_Value(new Date());
+        row += 1;
+        console.log(row);
         await authenticatedAttributes2.Add(oDateAttrs);
 
+        row += 1;
+        console.log(row);
         await oSignedData.propset_ContentEncoding(CADESCOM_BASE64_TO_BINARY);
+        row += 1;
+        console.log(row);
         await oSignedData.propset_Content(base64);
 
+        row += 1;
+        console.log(row);
         await oSigner.propset_Certificate(currentCert);
+        row += 1;
+        console.log(row);
         await oSigner.propset_Options(signOption);
         console.log('Signing....');
         return await oSignedData.SignCades(oSigner, CADESCOM_CADES_BES, type);
