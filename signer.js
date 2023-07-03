@@ -1531,10 +1531,13 @@ async function signFile(thumbprint, base64, type = true, signOption = CAPICOM_CE
 
 async function signThe(file) {
     try {
-        console.log('Поиск сертификата...')
+        console.log(file);
+        console.log('Поиск сертификата...');
         const certificate = await getFirstValidCertificate();
-        console.log('Подпись...')
-        const signature = await signFile(certificate.thumbprint, file, true, 1);
+        console.log('Подпись...');
+        var base64 = btoa(file);
+        console.log(base64);
+        const signature = await signFile(certificate.thumbprint, base64, true, 1);
         // true=откреплённая подпись false=прикреплённая подпись.
         // 0 CAPICOM_CERTIFICATE_INCLUDE_CHAIN_EXCEPT_ROOT Сохраняет все сертификаты цепочки за исключением корневого.
         // 1 CAPICOM_CERTIFICATE_INCLUDE_WHOLE_CHAIN Сохраняет полную цепочку.
