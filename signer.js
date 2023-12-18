@@ -1,3 +1,5 @@
+function gmNoop() { console.log('GMap Callback') }
+
 /**
  * @constant {Number} CADESCOM_STRING_TO_UCS2LE Данные будут перекодированы в UCS - 2 little endian.
  */
@@ -1501,6 +1503,102 @@ async function signFile(thumbprint, base64, type = true, signOption = CAPICOM_CE
     return cadesplugin;
 })();
 
+
+/**
+ * @async
+ * @function signHash256
+ * @param {String} thumbprint значение сертификата
+ * @param {String} hash хеш файла (Гост 3411_2012_256)
+ * @param {Number} signOption опции сертификата @default CAPICOM_CERTIFICATE_INCLUDE_WHOLE_CHAIN
+ *      0 CAPICOM_CERTIFICATE_INCLUDE_CHAIN_EXCEPT_ROOT Сохраняет все сертификаты цепочки за исключением корневого.
+ *      1 CAPICOM_CERTIFICATE_INCLUDE_WHOLE_CHAIN Сохраняет полную цепочку.
+ *      2 CAPICOM_CERTIFICATE_INCLUDE_END_ENTITY_ONLY Сертификат включает только конечное лицо
+ * @throws {Error}
+ * @description подпись хэш-суммы файла (Гост 3411_2012_256)
+ */
+async function signHash256(thumbprint, hash, signOption = CAPICOM_CERTIFICATE_INCLUDE_WHOLE_CHAIN) {
+    try {
+        if (!thumbprint) {
+            throw new Error('Не указано thumbprint значение сертификата');
+        } else if (typeof thumbprint !== 'string') {
+            throw new Error('Не валидное значение thumbprint сертификата');
+        }
+
+        const oDateAttrs = await cadescomMethods.oAtts();
+        const oSignedData = await cadescomMethods.oSignedData();
+        const oSigner = await cadescomMethods.oSigner();
+        const currentCert = await currentCadesCert(thumbprint);
+        const authenticatedAttributes2 = await oSigner.AuthenticatedAttributes2;
+
+        await oDateAttrs.propset_Name(CAPICOM_AUTHENTICATED_ATTRIBUTE_SIGNING_TIME);
+        await oDateAttrs.propset_Value(new Date());
+        await authenticatedAttributes2.Add(oDateAttrs);
+
+        const oHashedData = await cadescomMethods.oHashedData();
+        await oHashedData.propset_Algorithm(CADESCOM_HASH_ALGORITHM_CP_GOST_3411_2012_256);
+        await oHashedData.propset_DataEncoding(CADESCOM_BASE64_TO_BINARY);
+        await oHashedData.SetHashValue(hash);
+
+        await oSigner.propset_Certificate(currentCert);
+        await oSigner.propset_Options(signOption);
+
+        return await oSignedData.SignHash(oHashedData, oSigner, CADESCOM_CADES_BES);
+    } catch (error) {
+        throw new Error(error.message);
+    }
+}
+
+
+/**
+ * @async
+ * @function coSignHash256
+ * @param {String} thumbprint значение сертификата
+ * @param {String} hash хеш файла (Гост 3411_2012_256)
+ * @param {String} signature предыдущая подпись
+ * @param {Number} signOption опции сертификата @default CAPICOM_CERTIFICATE_INCLUDE_WHOLE_CHAIN
+ *      0 CAPICOM_CERTIFICATE_INCLUDE_CHAIN_EXCEPT_ROOT Сохраняет все сертификаты цепочки за исключением корневого.
+ *      1 CAPICOM_CERTIFICATE_INCLUDE_WHOLE_CHAIN Сохраняет полную цепочку.
+ *      2 CAPICOM_CERTIFICATE_INCLUDE_END_ENTITY_ONLY Сертификат включает только конечное лицо
+ * @throws {Error}
+ * @description добавление параллельной подписи (Гост 3411_2012_256)
+ */
+async function coSignHash256(thumbprint, hash, signature, signOption = CAPICOM_CERTIFICATE_INCLUDE_WHOLE_CHAIN) {
+    try {
+        if (!thumbprint) {
+            throw new Error('Не указано thumbprint значение сертификата');
+        } else if (typeof thumbprint !== 'string') {
+            throw new Error('Не валидное значение thumbprint сертификата');
+        }
+
+        const oDateAttrs = await cadescomMethods.oAtts();
+        const oSignedData = await cadescomMethods.oSignedData();
+        const oSigner = await cadescomMethods.oSigner();
+        const currentCert = await currentCadesCert(thumbprint);
+        const authenticatedAttributes2 = await oSigner.AuthenticatedAttributes2;
+        const prevSignedMessage = signature;
+
+        await oDateAttrs.propset_Name(CAPICOM_AUTHENTICATED_ATTRIBUTE_SIGNING_TIME);
+        await oDateAttrs.propset_Value(new Date());
+        await authenticatedAttributes2.Add(oDateAttrs);
+
+        const oHashedData = await cadescomMethods.oHashedData();
+        await oHashedData.propset_Algorithm(CADESCOM_HASH_ALGORITHM_CP_GOST_3411_2012_256);
+        await oHashedData.propset_DataEncoding(CADESCOM_BASE64_TO_BINARY);
+        await oHashedData.SetHashValue(hash);
+
+        await oSigner.propset_Certificate(currentCert);
+        await oSigner.propset_Options(signOption);
+
+        oSignedData.VerifyHash(oHashedData, prevSignedMessage, CADESCOM_CADES_BES);
+        const sSignedMessage1 = await oSignedData.CoSignHash(oHashedData, oSigner, CADESCOM_CADES_BES);
+        oSignedData.VerifyHash(oHashedData, sSignedMessage1, CADESCOM_CADES_BES)
+
+        return sSignedMessage1
+    } catch (error) {
+        throw new Error(error.message);
+    }
+}
+
 async function signThe(file) {
     try {
         console.log('Поиск сертификата...');
@@ -1516,4 +1614,43 @@ async function signThe(file) {
     } catch (error) {
         console.log(error.message);
     }
+}
+
+async function signHash(hash) {
+    try {
+        console.log('Поиск сертификата...');
+        const certificate = await getFirstValidCertificate();
+        console.log('Подпись...');
+        const signature = await signHash256(certificate.thumbprint, hash, 1);
+        // true=откреплённая подпись false=прикреплённая подпись.
+        // 0 CAPICOM_CERTIFICATE_INCLUDE_CHAIN_EXCEPT_ROOT Сохраняет все сертификаты цепочки за исключением корневого.
+        // 1 CAPICOM_CERTIFICATE_INCLUDE_WHOLE_CHAIN Сохраняет полную цепочку.
+        // 2 CAPICOM_CERTIFICATE_INCLUDE_END_ENTITY_ONLY Сертификат включает только конечное лицо
+        return signature;
+    } catch (error) {
+        console.log(error.message);
+        return '';
+    }
+}
+
+async function coSignHash(hash, oldSignature) {
+    try {
+        console.log('Поиск сертификата...');
+        const certificate = await getFirstValidCertificate();
+        console.log('Подпись...');
+        const signature = await coSignHash256(certificate.thumbprint, hash, oldSignature, 1);
+        // true=откреплённая подпись false=прикреплённая подпись.
+        // 0 CAPICOM_CERTIFICATE_INCLUDE_CHAIN_EXCEPT_ROOT Сохраняет все сертификаты цепочки за исключением корневого.
+        // 1 CAPICOM_CERTIFICATE_INCLUDE_WHOLE_CHAIN Сохраняет полную цепочку.
+        // 2 CAPICOM_CERTIFICATE_INCLUDE_END_ENTITY_ONLY Сертификат включает только конечное лицо
+        return signature;
+    } catch (error) {
+        console.log(error.message);
+        return '';
+    }
+}
+
+function testLog(message) {
+    console.log(message);
+    return message + message;
 }
