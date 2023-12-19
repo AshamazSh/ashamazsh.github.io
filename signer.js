@@ -1616,12 +1616,40 @@ async function signThe(file) {
     }
 }
 
-async function signHash(hash) {
+async function getAllCertificates() {
     try {
-        console.log('Поиск сертификата...');
-        const certificate = await getFirstValidCertificate();
+        let result = [];
+        const certList = await getCertsList();
+
+        for (let index = 0; index < certList.length; index++) {
+            let validation = await certList[index].certApi.IsValid();
+            let isValid = await validation.Result;
+            var certInfo = await certList[index].subjectInfo;
+            var certThumbprint = await certList[index].thumbprint;
+            if (certInfo != null && certThumbprint != null) {
+                result.push(certInfo, certThumbprint);
+            }
+        }
+        return result;
+    } catch (error) {
+        console.log(error.message);
+        return [];
+    }
+}
+
+async function signHash(thumbprint, hash) {
+    try {
         console.log('Подпись...');
-        const signature = await signHash256(certificate.thumbprint, hash, 1);
+        const signature = await signHash256(thumbprint, hash, 1);
+
+        // console.log(certificate.certApi);
+        // console.log(certificate.issuerInfo);
+        // console.log(certificate.privateKey);
+        // console.log(certificate.serialNumber);
+        // console.log(certificate.thumbprint);
+        // console.log(certificate.subjectInfo);
+        // console.log(certificate.validPeriod);
+
         // true=откреплённая подпись false=прикреплённая подпись.
         // 0 CAPICOM_CERTIFICATE_INCLUDE_CHAIN_EXCEPT_ROOT Сохраняет все сертификаты цепочки за исключением корневого.
         // 1 CAPICOM_CERTIFICATE_INCLUDE_WHOLE_CHAIN Сохраняет полную цепочку.
@@ -1633,12 +1661,10 @@ async function signHash(hash) {
     }
 }
 
-async function coSignHash(hash, oldSignature) {
+async function coSignHash(thumbprint, hash, oldSignature) {
     try {
-        console.log('Поиск сертификата...');
-        const certificate = await getFirstValidCertificate();
         console.log('Подпись...');
-        const signature = await coSignHash256(certificate.thumbprint, hash, oldSignature, 1);
+        const signature = await coSignHash256(thumbprint, hash, oldSignature, 1);
         // true=откреплённая подпись false=прикреплённая подпись.
         // 0 CAPICOM_CERTIFICATE_INCLUDE_CHAIN_EXCEPT_ROOT Сохраняет все сертификаты цепочки за исключением корневого.
         // 1 CAPICOM_CERTIFICATE_INCLUDE_WHOLE_CHAIN Сохраняет полную цепочку.
